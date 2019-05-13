@@ -9,7 +9,7 @@ def reviewed_businesses(user_id):
         for review in reviews:
             if review['user_id'] == user_id:
                 user_reviews.append(review['business_id'])
-                return(user_reviews)
+    return(user_reviews)
 
 
 def recommend(user_id=None, business_id=None, city=None, n=10):
@@ -26,6 +26,9 @@ def recommend(user_id=None, business_id=None, city=None, n=10):
             adress:str
         }
     """
+
+    print(user_id)
+
 # if the user is not logged in, give random options
     if user_id == None:
         if not city:
