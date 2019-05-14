@@ -62,9 +62,14 @@ def business_categories(categories):
     """ Return a list of businesses that fit the categories of the user.
     Score the businesses based on how many of the categories it contains"""
 
-def business_rating(user_id):
-    """ Return a dataframe with the ratings that users gave for a list of businesses"""
-
+def business_rating(user_id, user_businesses):
+    """ Return a dict with the ratings that users gave for a list of businesses"""
+    user_ratings = {}
+    for reviews in REVIEWS.values():
+        for review in reviews:
+            if review['business_id'] in user_businesses and review['user_id'] == user_id:
+                user_ratings[review['business_id']] = review['stars']
+    return user_ratings
 
 def recommend(user_id=None, business_id=None, city=None, n=10):
     
@@ -92,6 +97,9 @@ def recommend(user_id=None, business_id=None, city=None, n=10):
     # if the user is logged in
     reviewed = reviewed_businesses(user_id)
     print(reviewed)
+
+    rating = business_rating(user_id, reviewed)
+    print(rating)
 
     categories_dict = user_categories(reviewed)
     print(categories_dict)
