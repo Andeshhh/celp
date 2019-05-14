@@ -2,6 +2,7 @@ from data import CITIES, BUSINESSES, USERS, REVIEWS, TIPS, CHECKINS
 from itertools import chain
 from collections import Counter
 
+import pandas as pd
 import random
 
 def reviewed_businesses(user_id):
@@ -27,15 +28,42 @@ def user_categories(user_businesses):
                 user_categories.append(categories)
     
     return Counter(chain.from_iterable(user_categories))
+
+def categories_dataframe():
+    """ Make a dataframe with the business_id's and their categories"""
+    all_data = list()
+    for businesses in BUSINESSES.values():
+        for business in businesses:
+            business_id = business['business_id']
+            categories = business['categories']
     
+    # add to the data collected so far
+            all_data.append([business_id, categories])
+
+    # create the DataFrame
+    categories_df = pd.DataFrame(all_data, columns=['business_id', 'categories'])
+    return categories_df
+
+def extract_categories():
+    """" extract the categories"""
+    businesses = categories_dataframe()
+    categories_b = businesses.apply(lambda row: pd.Series([row['business_id']] + row['categories'].split(", ")), axis=1)
+    stack_categories = categories_b.set_index(0).stack()
+    df_stack_categories = stack_categories.to_frame()
+    df_stack_categories['business_id'] = stack_categories.index.droplevel(1)
+    df_stack_categories.columns = ['categories', 'business_id']
+    return df_stack_categories.reset_index()[['business_id', 'categories']]
+
+def utility_categories(df):
+    """ Returns the utility matrix for all the businesses and their categories"""
+    return df.pivot_table(index = 'business_id', columns = 'categories', aggfunc = 'size', fill_value=0)
+
 def business_categories(categories):
     """ Return a list of businesses that fit the categories of the user.
     Score the businesses based on how many of the categories it contains"""
 
-
 def business_rating(user_id):
     """ Return a dataframe with the ratings that users gave for a list of businesses"""
-
 
 
 def recommend(user_id=None, business_id=None, city=None, n=10):
@@ -67,6 +95,10 @@ def recommend(user_id=None, business_id=None, city=None, n=10):
 
     categories_dict = user_categories(reviewed)
     print(categories_dict)
+
+    categories_dataframe = extract_categories()
+    utility_matrix = utility_categories(categories_dataframe)
+    print(utility_matrix.head())
 
     if not city:
         city = random.choice(CITIES)
