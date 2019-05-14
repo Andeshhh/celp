@@ -2,11 +2,12 @@ from data import CITIES, BUSINESSES, USERS, REVIEWS, TIPS, CHECKINS
 from itertools import chain
 from collections import Counter
 from pandas.io.json import json_normalize
-import sklearn.metrics.pairwise as pw 
 
+import sklearn.metrics.pairwise as pw 
 import numpy as np
 import pandas as pd
 import random
+
 
 def reviewed_businesses(user_id):
     """Returns a list of the businesses the current user left a review on """
@@ -92,7 +93,7 @@ def split_data(data, d = 0.75):
     mask_test = np.random.rand(data.shape[0]) < d
     return data[mask_test], data[~mask_test]
 
-def json_to_df():
+def json_to_df_stars():
     """Converts all review.jsons to a single DataFrame containing the columns business_id and user_id"""
     df = pd.DataFrame()
 
@@ -104,6 +105,17 @@ def json_to_df():
     # drop repeated user/business reviews and only save the latest one (since that one is most relevant)
     df = df.drop_duplicates(subset=["business_id", "user_id"], keep="last").reset_index()[["business_id", "stars", "user_id"]]
     return df
+
+def extract_categories():
+    """" extract the categories"""
+    businesses = categories_dataframe()
+    categories_b = businesses.apply(lambda row: pd.Series([row['business_id']] + row['categories'].split(", ")), axis=1)
+    stack_categories = categories_b.set_index(0).stack()
+    df_stack_categories = stack_categories.to_frame()
+    df_stack_categories['business_id'] = stack_categories.index.droplevel(1)
+    df_stack_categories.columns = ['categories', 'business_id']
+    return df_stack_categories.reset_index()[['business_id', 'categories']]
+
 
 def create_similarity_matrix_cosine(matrix):
     """Creates a adjusted(/soft) cosine similarity matrix.
@@ -181,14 +193,14 @@ def mse(predicted_ratings):
     diff = predicted_ratings['stars'] - predicted_ratings['predicted rating']
     return (diff**2).mean()
 
-def extract_genres(movies):
+def extract_genres(dataframe):
     """Create an unfolded genre dataframe. Unpacks genres seprated by a '|' into seperate rows.
 
     Arguments:
     movies -- a dataFrame containing at least the columns 'movieId' and 'genres' 
               where genres are seprated by '|'
     """
-    genres_m = movies.apply(lambda row: pd.Series([row['business_id']] + row['categories'].lower().split(", ")), axis=1)
+    genres_m = dataframe.apply(lambda row: pd.Series([row['business_id']] + row['categories'].lower().split(", ")), axis=1)
     stack_genres = genres_m.set_index(0).stack()
     df_stack_genres = stack_genres.to_frame()
     df_stack_genres['business_id'] = stack_genres.index.droplevel(1)
@@ -218,6 +230,25 @@ def create_similarity_matrix_categories(matrix):
     return pd.DataFrame(m3, index = matrix.index, columns = matrix.index)
 
 
-# ut = pivot_ratings(json_to_df())
-# sim = create_similarity_matrix_cosine(ut)
-# print(mse(predict_ratings(sim, ut, json_to_df())))
+# make a training and test set
+df = json_to_df_stars()
+df_training, df_test = split_data(df, d = 0.9)
+# make the utility matrix with the amount of stars
+df_utility_stars = pivot_ratings(df_training)
+
+# create the dataframe with the business id's and categories
+categories_dataframe = extract_categories()
+
+# make utility matrix with the categories
+df_utility_categories = pivot_genres(categories_dataframe)
+
+# make a similarity matrix with the use of the categories utility matrix
+df_similarity_categories = create_similarity_matrix_categories(df_utility_categories)
+
+# predict the ratings
+predicted_ratings = predict_ratings(df_similarity_categories, df_utility_stars, df_test)
+print(predicted_ratings)
+
+# calculate the mse for content based filtering
+mse_content = mse(predicted_ratings)
+print(mse_content)
