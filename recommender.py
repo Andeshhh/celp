@@ -58,9 +58,11 @@ def utility_categories(df):
     """ Returns the utility matrix for all the businesses and their categories"""
     return df.pivot_table(index = 'business_id', columns = 'categories', aggfunc = 'size', fill_value=0)
 
-def business_categories(categories):
-    """ Return a list of businesses that fit the categories of the user.
-    Score the businesses based on how many of the categories it contains"""
+def business_categories(dataframe, cat_dict):
+    """ Return a dataframe of businesses that fit the categories of the user."""
+    categories = list(cat_dict.keys())
+    df_new = dataframe[categories]
+    return df_new[(df_new.T != 0).any()]
 
 def business_rating(user_id, user_businesses):
     """ Return a dict with the ratings that users gave for a list of businesses"""
@@ -107,6 +109,9 @@ def recommend(user_id=None, business_id=None, city=None, n=10):
     categories_dataframe = extract_categories()
     utility_matrix = utility_categories(categories_dataframe)
     print(utility_matrix.head())
+
+    useful_busines = business_categories(utility_matrix, categories_dict)
+    print(useful_busines)
 
     if not city:
         city = random.choice(CITIES)
