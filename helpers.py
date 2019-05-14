@@ -163,7 +163,7 @@ def predict_ids(similarity, utility, userId, itemId):
     # select right series from matrices and compute
     if userId in utility.columns and itemId in similarity.index:
         return predict_vectors(utility.loc[:,userId], similarity[itemId])
-    return 0
+    return np.nan
 
 def predict_vectors(user_ratings, similarities):
     # select only movies actually rated by user
@@ -179,7 +179,7 @@ def predict_vectors(user_ratings, similarities):
     # if there's nothing left return a prediction of 0
     norm = similarities_s.sum()
     if(norm == 0):
-        return 0
+        return np.nan
     
     # compute a weighted average (i.e. neighborhood is all) 
     return np.dot(relevant_ratings, similarities_s)/norm
@@ -247,6 +247,7 @@ df_similarity_categories = create_similarity_matrix_categories(df_utility_catego
 
 # predict the ratings
 predicted_ratings = predict_ratings(df_similarity_categories, df_utility_stars, df_test)
+predicted_ratings.dropna()
 print(predicted_ratings)
 
 # calculate the mse for content based filtering
