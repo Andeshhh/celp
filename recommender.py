@@ -7,7 +7,7 @@ import random
 def reviewed_businesses(user_id):
     """Returns a list of the businesses the current user left a review on """
     user_reviews =[]
-    for city, reviews in REVIEWS.items():
+    for reviews in REVIEWS.values():
         for review in reviews:
             if review['user_id'] == user_id:
                 user_reviews.append(review['business_id'])
@@ -20,7 +20,7 @@ def user_categories(user_businesses):
     A list of businesses that the user reviewed on needs to be given
     """
     user_categories =[]
-    for city, businesses in BUSINESSES.items():
+    for businesses in BUSINESSES.values():
         for business in businesses:
             if business['business_id'] in user_businesses:
                 categories = business["categories"].split(", ")
