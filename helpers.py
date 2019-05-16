@@ -8,76 +8,6 @@ import numpy as np
 import pandas as pd
 import random
 
-
-def reviewed_businesses(user_id):
-    """Returns a list of the businesses the current user left a review on """
-    user_reviews =[]
-    for reviews in REVIEWS.values():
-        for review in reviews:
-            if review['user_id'] == user_id:
-                user_reviews.append(review['business_id'])
-    return(user_reviews)
-
-def user_categories(user_businesses):
-    """ Return the categories of the restaurants where the user left a review
-    Do this with a dict so that the most reviewed type business has a higher number.
-    A list of businesses that the user reviewed on needs to be given
-    """
-    user_categories =[]
-    for businesses in BUSINESSES.values():
-        for business in businesses:
-            if business['business_id'] in user_businesses:
-                categories = business["categories"].split(", ")
-                user_categories.append(categories)
-    
-    return Counter(chain.from_iterable(user_categories))
-
-def categories_dataframe():
-    """ Make a dataframe with the business_id's and their categories"""
-    all_data = list()
-    for businesses in BUSINESSES.values():
-        for business in businesses:
-            business_id = business['business_id']
-            categories = business['categories']
-    
-    # add to the data collected so far
-            all_data.append([business_id, categories])
-
-    # create the DataFrame
-    categories_df = pd.DataFrame(all_data, columns=['business_id', 'categories'])
-    return categories_df
-
-def extract_categories():
-    """" extract the categories"""
-    businesses = categories_dataframe()
-    categories_b = businesses.apply(lambda row: pd.Series([row['business_id']] + row['categories'].split(", ")), axis=1)
-    stack_categories = categories_b.set_index(0).stack()
-    df_stack_categories = stack_categories.to_frame()
-    df_stack_categories['business_id'] = stack_categories.index.droplevel(1)
-    df_stack_categories.columns = ['categories', 'business_id']
-    return df_stack_categories.reset_index()[['business_id', 'categories']]
-
-def utility_categories(df):
-    """ Returns the utility matrix for all the businesses and their categories"""
-    return df.pivot_table(index = 'business_id', columns = 'categories', aggfunc = 'size', fill_value=0)
-
-def business_categories(dataframe, cat_dict):
-    """ Return a dataframe of businesses that fit the categories of the user."""
-    categories = list(cat_dict.keys())
-    df_new = dataframe[categories]
-    return df_new[(df_new.T != 0).any()]
-
-def business_rating(user_id, user_businesses):
-    """ Return a dict with the ratings that users gave for a list of businesses"""
-    user_ratings = {}
-    for reviews in REVIEWS.values():
-        for review in reviews:
-            if review['business_id'] in user_businesses and review['user_id'] == user_id:
-                user_ratings[review['business_id']] = review['stars']
-    return user_ratings
-
-
-
 ##################################################
 #            """ CONTENT BASED """"
 ##################################################
@@ -105,6 +35,21 @@ def json_to_df_stars():
     # drop repeated user/business reviews and only save the latest one (since that one is most relevant)
     df = df.drop_duplicates(subset=["business_id", "user_id"], keep="last").reset_index()[["business_id", "stars", "user_id"]]
     return df
+
+def categories_dataframe():
+    """ Make a dataframe with the business_id's and their categories"""
+    all_data = list()
+    for businesses in BUSINESSES.values():
+        for business in businesses:
+            business_id = business['business_id']
+            categories = business['categories']
+    
+    # add to the data collected so far
+            all_data.append([business_id, categories])
+
+    # create the DataFrame
+    categories_df = pd.DataFrame(all_data, columns=['business_id', 'categories'])
+    return categories_df
 
 def extract_categories():
     """" extract the categories"""
@@ -232,7 +177,7 @@ def create_similarity_matrix_categories(matrix):
 
 # make a training and test set
 df = json_to_df_stars()
-df_training, df_test = split_data(df, d = 0.9)
+df_training, df_test = split_data(df, d = 0.75)
 # make the utility matrix with the amount of stars
 df_utility_stars = pivot_ratings(df_training)
 
@@ -241,15 +186,28 @@ categories_dataframe = extract_categories()
 
 # make utility matrix with the categories
 df_utility_categories = pivot_genres(categories_dataframe)
-
 # make a similarity matrix with the use of the categories utility matrix
 df_similarity_categories = create_similarity_matrix_categories(df_utility_categories)
 
 # predict the ratings
 predicted_ratings = predict_ratings(df_similarity_categories, df_utility_stars, df_test)
 predicted_ratings.dropna()
-print(predicted_ratings)
 
 # calculate the mse for content based filtering
 mse_content = mse(predicted_ratings)
-print(mse_content)
+print('mse content based = ', mse_content)
+
+
+##################################################
+#   """ COLLABORATIVE FILTERING ITEM BASED """"
+##################################################
+
+# make utility and similarity matrix
+df_utility_ratings = pivot_ratings(df_training)
+df_similarity_ratings = create_similarity_matrix_cosine(df_utility_ratings)
+
+# predict ratings and calculate mse
+predicted_ratings_items = predict_ratings(df_similarity_ratings, df_utility_ratings, df_test)
+mse_item_based = mse(predicted_ratings_items)
+
+print('mse item based =', mse_item_based)
