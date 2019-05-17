@@ -8,11 +8,9 @@ import numpy as np
 import pandas as pd
 import random
 
-##################################################
-#            """ CONTENT BASED """"
-##################################################
+""" Onderstaande functies komen uit de opdracht van week 4, content based filtering"""
 
-def split_data(data, d = 0.75):
+def split_data(data, d):
     """Split data in a training and test set.
     
     Arguments:
@@ -54,6 +52,9 @@ def categories_dataframe():
 def extract_categories():
     """" extract the categories"""
     businesses = categories_dataframe()
+
+    # replace nan with emptry string
+    businesses = businesses.fillna('')
     categories_b = businesses.apply(lambda row: pd.Series([row['business_id']] + row['categories'].split(", ")), axis=1)
     stack_categories = categories_b.set_index(0).stack()
     df_stack_categories = stack_categories.to_frame()
@@ -173,41 +174,3 @@ def create_similarity_matrix_categories(matrix):
     m2 = m1 / diag
     m3 = np.minimum(m2, m2.T)
     return pd.DataFrame(m3, index = matrix.index, columns = matrix.index)
-
-
-# make a training and test set
-df = json_to_df_stars()
-df_training, df_test = split_data(df, d = 0.75)
-# make the utility matrix with the amount of stars
-df_utility_stars = pivot_ratings(df_training)
-
-# create the dataframe with the business id's and categories
-categories_dataframe = extract_categories()
-
-# make utility matrix with the categories
-df_utility_categories = pivot_genres(categories_dataframe)
-# make a similarity matrix with the use of the categories utility matrix
-df_similarity_categories = create_similarity_matrix_categories(df_utility_categories)
-
-# predict the ratings
-predicted_ratings = predict_ratings(df_similarity_categories, df_utility_stars, df_test)
-predicted_ratings.dropna()
-
-# calculate the mse for content based filtering
-mse_content = mse(predicted_ratings)
-print('mse content based = ', mse_content)
-
-
-##################################################
-#   """ COLLABORATIVE FILTERING ITEM BASED """"
-##################################################
-
-# make utility and similarity matrix
-df_utility_ratings = pivot_ratings(df_training)
-df_similarity_ratings = create_similarity_matrix_cosine(df_utility_ratings)
-
-# predict ratings and calculate mse
-predicted_ratings_items = predict_ratings(df_similarity_ratings, df_utility_ratings, df_test)
-mse_item_based = mse(predicted_ratings_items)
-
-print('mse item based =', mse_item_based)
