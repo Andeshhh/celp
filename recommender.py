@@ -1,7 +1,7 @@
 from helpers import *
+from data import *
 
-
-from data import CITIES, BUSINESSES, USERS, REVIEWS, TIPS, CHECKINS
+# from data import CITIES, BUSINESSES, USERS, REVIEWS, TIPS, CHECKINS
 
 def density(dataframe):
     # give the density of the dataframe (how much is not NaN)
@@ -28,7 +28,6 @@ def predictions_item_based():
     # predict ratings and calculate mse
     predicted_ratings = predict_ratings(df_similarity_ratings, df_utility_ratings, df_test)
     # predicted_ratings = predicted_ratings.dropna()
-    density(df_utility_ratings)
 
     return predicted_ratings
 
@@ -48,7 +47,7 @@ def predictions_content_based():
     predicted_ratings = predict_ratings(df_similarity_categories, df_utility_stars, df_test)
     # predicted_ratings = predicted_ratings.dropna()
 
-    density(df_utility_categories)
+    density(df_utility_stars)
     return predicted_ratings
 
 
@@ -69,7 +68,6 @@ print("mse content based: ", mse(predictions_content_based()))
 print("mse item based: ", mse(predictions_item_based()))
 
 def recommend(user_id=None, business_id=None, city=None, n=10):
-    
     """
     Returns n recommendations as a list of dicts.
     Optionally takes in a user_id, business_id and/or city.
@@ -82,6 +80,34 @@ def recommend(user_id=None, business_id=None, city=None, n=10):
             adress:str
         }
     """
+    # predictions = predictions_item_based()
+    # #filter out the NaN
+    # user_pred = predictions.loc[predictions['user_id'] == user_id].dropna()
+
+    # options = user_pred['business_id'].tolist()
+    # print(options)
+    
+    # # if there are not enough recommendations with item based, add the recommendations with hybrid
+    # if len(options) < n:
+    #     predictions =  hybrid_based()
+    #     #filter out the NaN
+    #     user_pred = predictions.loc[predictions['user_id'] == user_id].dropna()
+    #     options = options + user_pred['business_id'].tolist()
+    
+    # # if there are still not enough options, add random recommendations
+    # if len(options) < n:
+    #     extra_businesses = random.sample(BUSINESSES[random.choice(CITIES)], n - len(options))
+    #     print(extra_businesses)
+    # recommend_this = []
+
+
+    # for city in CITIES:
+    #     for option in options:
+    #         business = get_business(city, option)
+    #         recommend_this = recommend_this.append(business)
+
+    # return recommend_this + extra_businesses
+
     if not city:
         city = random.choice(CITIES)
         return random.sample(BUSINESSES[city], n)
