@@ -4,9 +4,10 @@ from helpers import *
 from data import CITIES, BUSINESSES, USERS, REVIEWS, TIPS, CHECKINS
 
 def density(dataframe):
+    # give the density of the dataframe (how much is not NaN)
     df2 = dataframe.to_sparse()
     dense = df2.density
-    print(dense)
+    print("density utility matrix: ",dense)
     return dense
 
 
@@ -27,7 +28,7 @@ def predictions_item_based():
     # predict ratings and calculate mse
     predicted_ratings = predict_ratings(df_similarity_ratings, df_utility_ratings, df_test)
     # predicted_ratings = predicted_ratings.dropna()
-    density(predicted_ratings)
+    density(df_utility_ratings)
 
     return predicted_ratings
 
@@ -47,7 +48,7 @@ def predictions_content_based():
     predicted_ratings = predict_ratings(df_similarity_categories, df_utility_stars, df_test)
     # predicted_ratings = predicted_ratings.dropna()
 
-    density(predicted_ratings)
+    density(df_utility_categories)
     return predicted_ratings
 
 
@@ -59,13 +60,13 @@ def hybrid_based():
     combined['predicted rating'] = combined[['predicted rating', 'predict_content']].mean(axis=1)
     return item_prediction.drop(columns=['predict_content'])
 
-# training, test = training_test()
-# print("the size of the training set: ", training.size)
-# print("the size of the test set: ", test.size)
+training, test = training_test()
+print("the size of the training set: ", training.size)
+print("the size of the test set: ", test.size)
 
-# print("mse hybrid based: ", mse(hybrid_based()))
-# print("mse content based: ", mse(predictions_content_based()))
-# print("mse item based: ", mse(predictions_item_based()))
+print("mse hybrid based: ", mse(hybrid_based()))
+print("mse content based: ", mse(predictions_content_based()))
+print("mse item based: ", mse(predictions_item_based()))
 
 def recommend(user_id=None, business_id=None, city=None, n=10):
     
