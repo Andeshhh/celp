@@ -2,6 +2,7 @@ from helpers import *
 from data import CITIES, BUSINESSES, USERS, REVIEWS, TIPS, CHECKINS
 
 from heapq import nlargest
+import time
 
 def density(dataframe):
     # give the density of the dataframe (how much is not NaN)
@@ -45,7 +46,7 @@ def predictions_content_based():
     predicted_ratings = predict_ratings(df_similarity_categories, df_utility_stars, df_test)
     # predicted_ratings = predicted_ratings.dropna()
 
-    density(df_utility_stars)
+    # density(df_utility_stars)
     return predicted_ratings
 
 
@@ -93,14 +94,16 @@ def recommend(user_id=None, business_id=None, city=None, n=10):
             adress:str
         }
     """
+
     if user_id == None:
         city = random.choice(CITIES)
         return random.sample(BUSINESSES[city], n)
 
+    start_time = time.time()
 
     # if the user is logged in
     """ Hybrid based """
-    predictions = hybrid_based()
+    predictions = predictions_item_based()
     user_pred = predictions.loc[predictions['user_id'] == user_id]
 
     # keep the predictions that have a rating of 2.5 and higher
@@ -124,4 +127,5 @@ def recommend(user_id=None, business_id=None, city=None, n=10):
         # get the info of the recommended businesses
         info = business_info(best_options)
         
+    print("--- %s seconds for item based, user Amelia---" % (time.time() - start_time))
     return info 
