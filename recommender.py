@@ -103,7 +103,7 @@ def recommend(user_id=None, business_id=None, city=None, n=10):
 
     # if the user is logged in
     """ Hybrid based """
-    predictions = predictions_item_based()
+    predictions = hybrid_based()
     user_pred = predictions.loc[predictions['user_id'] == user_id]
 
     # keep the predictions that have a rating of 2.5 and higher
@@ -127,5 +127,5 @@ def recommend(user_id=None, business_id=None, city=None, n=10):
         # get the info of the recommended businesses
         info = business_info(best_options)
         
-    print("--- %s seconds for item based, user Amelia---" % (time.time() - start_time))
+    print("--- %s seconds for hybrid based, user Amelia---" % (time.time() - start_time))
     return info 
