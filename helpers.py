@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import random
 
-""" Onderstaande functies komen uit de opdracht van week 4, content based filtering"""
+""" Onderstaande functies komen uit de 4e opdracht, content based filtering"""
 
 def split_data(data, d):
     """Split data in a training and test set.
