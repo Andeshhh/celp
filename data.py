@@ -21,8 +21,6 @@ def load_cities():
     """
     return os.listdir(DATA_DIR)
 
-## Emma kan niet updaten
-
 
 def load(cities, data_filename):
     """
